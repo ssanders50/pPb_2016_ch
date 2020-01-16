@@ -62,7 +62,7 @@ using namespace hi;
 using namespace edm;
 
 static const int ntrkbins = 5;
-static const  double trkBins[]={0, 120, 150, 185, 250, 500};
+static const  double trkBins[]={0, 120, 150, 185, 250, 600};
 
 static const int ncentbins = 13;
 static const  double centbins[]={0, 5, 10, 15, 20, 25, 30, 35, 40,  50, 60, 70, 80, 100};
@@ -526,32 +526,21 @@ private:
       
       if( itTrack->pt() < 0.4 ) continue;
       ++Ntrk;
-    }
-    
-    for(int i = 0; i<(int)tPhi->size(); i++) {
-      double phi = (*tPhi)[i];
-      hqwPhi->Fill(phi);
-      double eta = (*tEta)[i];
-      hqwEta->Fill(eta);
-      double Rapidity = (*tRapidity)[i];
-      hqwRapidity->Fill(Rapidity);
-      double pt = (*tPt)[i];
-      hqwPt->Fill(pt);
-      double mass = (*tMass)[i];
-      hqwMass->Fill(mass);
-      double weight = (*tWeight)[i];
-      hqwWeight->Fill(weight);
-      double eff = 1.;
+
+      double eta = itTrack->eta();
+      double pt = itTrack->pt();
+      double phi = itTrack->phi();
       for(int iorder = 2; iorder <=4; iorder++) {
-	qxtrk[iorder-2]->Fill(pt, eta, eff*(TMath::Cos(iorder*phi)));
-	qytrk[iorder-2]->Fill(pt, eta, eff*(TMath::Sin(iorder*phi)));
+	qxtrk[iorder-2]->Fill(pt, eta, (TMath::Cos(iorder*phi)));
+	qytrk[iorder-2]->Fill(pt, eta, (TMath::Sin(iorder*phi)));
       }
-      qcnt->Fill(pt, eta, eff);
-      avpt->Fill(pt, eta, eff*pt);
+      qcnt->Fill(pt, eta);
+      avpt->Fill(pt, eta, pt);
       ptspec[bin]->Fill(pt,eta,pt);
       ptspecCnt[bin]->Fill(pt,eta);
-    
+
     }
+    
 
     return Ntrk;
   }
@@ -663,7 +652,7 @@ VNAnalyzer::VNAnalyzer(const edm::ParameterSet& iConfig):runno_(0)
   maxrun_ = iConfig.getUntrackedParameter<int>("maxrun_", 50000);	
   effTable_ = iConfig.getParameter<std::string>("effTable_");
   bCaloMatching_ = iConfig.getUntrackedParameter<bool>("bCaloMaching", false);
-  Recenter_ = iConfig.getUntrackedParameter<bool>("Recenter",true);
+  Recenter_ = iConfig.getUntrackedParameter<bool>("Recenter",false);
   makeTree_ = iConfig.getUntrackedParameter<bool>("makeTree_",false);
 
   nvtx_ = iConfig.getUntrackedParameter<int>("nvtx_", 100);
@@ -1216,6 +1205,7 @@ VNAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       if(i==HFp2) epstat = true;
     }
   }
+  if(!epstat) return;
   ptav[ibin]->Add(avpt);
   ptcnt[ibin]->Add(qcnt);
   for(int iorder = 2; iorder<=4; iorder++) {
